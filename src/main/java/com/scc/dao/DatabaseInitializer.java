@@ -15,6 +15,18 @@ public class DatabaseInitializer {
             );
             """;
 
+        // [NEW] Audit trail table. No FOREIGN KEY on purpose: logs must survive
+        // even after a user account is deleted.
+        String createActivityLogsTable = """
+            CREATE TABLE IF NOT EXISTS activity_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                action_type TEXT NOT NULL,
+                description TEXT,
+                timestamp DATETIME DEFAULT (datetime('now', 'localtime'))
+            );
+            """;
+
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement()) {
 
@@ -24,6 +36,7 @@ public class DatabaseInitializer {
             }
 
             stmt.execute(createUsersTable);
+            stmt.execute(createActivityLogsTable); // [NEW]
 
             String insertAdmin = """
                 INSERT OR IGNORE INTO users (username, password, roles, status)

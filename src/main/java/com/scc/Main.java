@@ -1,5 +1,6 @@
 package com.scc;
 
+import com.scc.dao.ActivityLogDao;
 import com.scc.dao.DatabaseInitializer;
 import com.scc.dao.UserDao;
 import com.scc.ui.Authentication;
@@ -10,6 +11,7 @@ public class Main {
         DatabaseInitializer.init();
         Scanner sharedScanner = new Scanner(System.in);
         UserDao sharedUserDao = new UserDao();
-        new Authentication(sharedScanner, sharedUserDao).start();
+        ActivityLogDao sharedLogDao = new ActivityLogDao(); // [NEW]
+        new Authentication(sharedScanner, sharedUserDao, sharedLogDao).start();
     }
 }

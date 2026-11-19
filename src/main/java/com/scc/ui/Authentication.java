@@ -1,5 +1,6 @@
 package com.scc.ui;
 
+import com.scc.dao.ActivityLogDao;
 import com.scc.dao.UserDao;
 import com.scc.model.User;
 import java.util.Optional;
@@ -8,10 +9,12 @@ import java.util.Scanner;
 public class Authentication {
     private final Scanner sc;
     private final UserDao userDao;
+    private final ActivityLogDao logDao;
 
-    public Authentication(Scanner scanner, UserDao userDao) {
+    public Authentication(Scanner scanner, UserDao userDao, ActivityLogDao logDao) {
         this.sc = scanner;
         this.userDao = userDao;
+        this.logDao = logDao;
     }
 
     public void start() {
@@ -86,11 +89,22 @@ public class Authentication {
     }
 
     private void routeToDashboard(User user) {
+        // [NEW] Log the login
+        logDao.logAction(user.id(), "USER_LOGIN",
+                user.roles() + " '" + user.username() + "' [ID " + user.id() + "] logged in");
+
         switch (user.roles()) {
-            case "ADMIN" -> new AdminMenu(sc, userDao, user).show();
-            case "STAFF" -> new StaffMenu(sc, userDao).show();
-            case "BORROWER" -> new BorrowerMenu(sc, userDao).show();
-            default -> System.out.println("❌ Access denied.\n");
+            case "ADMIN" -> new AdminMenu(sc, userDao, logDao, user).show();
+            case "STAFF" -> new StaffMenu(sc, userDao, logDao, user).show();
+            case "BORROWER" -> new BorrowerMenu(sc, userDao, logDao, user).show();
+            default -> {
+                System.out.println("❌ Access denied.\n");
+                return;
+            }
         }
+
+        // [NEW] Runs after the menu's show() returns (user chose Logout)
+        logDao.logAction(user.id(), "USER_LOGOUT",
+                user.roles() + " '" + user.username() + "' [ID " + user.id() + "] logged out");
     }
 }
